@@ -1,0 +1,87 @@
+# =====================================================================
+#  SALT configuration – EXAMPLE / TEMPLATE
+#
+#  HOW TO USE THIS FILE:
+#    1. Make a copy of this file in the same folder.
+#    2. Rename the copy to exactly:   config.yml
+#    3. Open config.yml and change the paths/settings for your data
+#       (the lines marked  <-- EDIT  are the ones you usually need to change).
+#
+#  The pipeline reads "config.yml", NOT this example file, so it will not
+#  run until you have created config.yml. Keep this example as a reference.
+# =====================================================================
+
+# ---------------------------------------------------------------------------
+# Pipeline: the ordered list of steps to run. Comment a line to skip that step.
+# Don't change the order
+# ---------------------------------------------------------------------------
+pipeline:
+  scripts_in_order:           
+    - manifest_process
+    - calibrated_mzml_transfer
+    - pyOpenMS_deconv
+    - PSM_preprocess
+    - masscal_intensityfilter
+    - theoretical_spectra_match
+    - rsm_score
+    - score_report
+    - rsm_fdr_filter
+    - score_evalue
+    - psm_rsm_join
+
+# ---------------------------------------------------------------------------
+# Data locations  <-- EDIT these for your machine/data.
+# Paths may be absolute, or relative to input_dir where noted.
+# ---------------------------------------------------------------------------
+input_dir: "/path/to/your/data"             # <-- EDIT: folder with RAW files + the .fp-manifest
+analysis_output_dir: "/path/to/your/output" # <-- EDIT: where results are written
+deconv_output_dir: "deconv_output"          # relative to input_dir unless absolute
+manifest_input_file: "fragpipe-files.fp-manifest"  # FragPipe manifest, under input_dir
+search_folder: "searches"                   # <-- EDIT: search results (psm.tsv), under input_dir
+
+# ProteoWizard msconvert executable (Windows only). Used by calibrated_mzml_transfer.
+# Download: https://proteowizard.sourceforge.io/download.html (choose version with vendor-file support)
+#
+# On Linux/macOS there is no native msconvert: the step runs it in the ProteoWizard
+# Docker image (chambm/pwiz-skyline-i-agree-to-the-vendor-licenses) under Wine, and
+# this setting is ignored. Install Docker and pull the image once:
+#   docker pull chambm/pwiz-skyline-i-agree-to-the-vendor-licenses
+# See the "ProteoWizard (msconvert)" section of README.md for details.
+msconvert_exe: "C:/Program Files/ProteoWizard/msconvert.exe"  # <-- EDIT: your install path, leave blank on Linux/macOS
+
+# ---------------------------------------------------------------------------
+# Core analysis parameters.
+# ---------------------------------------------------------------------------
+tolerance:
+  value: 0.01        # fragment peak-matching tolerance
+  unit: da           # 'da' (dalton) or 'ppm'
+
+max_workers: 1       # how many parallel-safe steps run at once (no CLI override; set here)
+
+calibration:
+  mass_calibration_starting_tol: 0.05   # starting tolerance for uracil peak mass calibration
+
+matching:
+  # Theoretical fragment library shipped with the package (in salt/data/).
+  # Give just the filename; one of: theoretical_spectra_5nt.csv (no decoy, FDR 
+  # control disabled), or _azido.csv, _methyl.csv, _fluoro.csv. An absolute 
+  # path to a custom library outside the package also works.
+  theoretical_spectra_path: "theoretical_spectra_5nt_azido.csv"
+  rna_low_intensity_filter:
+    enabled: false
+    # Drop RNA peaks weaker than this share of the scan's base peak.
+    # UNITS: PERCENT. 0.01 = 0.01% of the base peak; set 1.0 for 1%.
+    min_rel_intensity: 0.01
+  mass_array_source: cal    # 'cal' (calibrated) or 'uncal'
+
+FDR_control:
+  rsm_fdr_level: 0.01        # decoy-based FDR threshold (0.01 = 1%)
+  noncanonical_decoy_id_prefixes:   # ID prefixes treated as decoys by RSM_FDR_filter
+    - "azido_"
+    - "methyl_"
+    - "fluoro_"
+
+preprocessing:
+  peptide_seq_frag: hcd      # fragmentation method used for the peptide search
+  peptide_seq_ce: 30         # collision energy used for the peptide search
+

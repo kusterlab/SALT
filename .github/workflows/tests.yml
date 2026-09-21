@@ -1,0 +1,59 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Tested against the range declared in pyproject (requires-python = ">=3.11").
+        # 3.14 (the dev/conda version) can be added once GitHub runners ship it.
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        # The test import path only needs numpy/pandas/pyyaml (+ pytest); it does
+        # not pull in pyopenms or the plotting stack, so we install the minimum
+        # for fast CI. This does NOT verify the package install — see the
+        # separate build check below for that.
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest numpy pandas pyyaml
+
+      - name: Run tests
+        # No config.yml needed on a fresh checkout: several pipeline modules read the
+        # config at import time, so tests/conftest.py derives a throwaway one from
+        # config.example.yml and runs the session from a temp directory.
+        run: pytest -v
+
+  build:
+    # Verifies pyproject.toml produces a valid wheel/sdist without installing the
+    # heavy runtime stack. Catches packaging bugs the fast test job skips.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Check metadata
+        run: |
+          pip install twine
+          twine check dist/*

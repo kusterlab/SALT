@@ -1,0 +1,28 @@
+# Conda environment for SALT – exact versions of a known-good install.
+#
+# This file is a reproducibility record, not the easiest way to install the
+# package: the pins below are tied to Python 3.14, and some of them may not
+# resolve on every platform. If `conda env create` fails, use the pip route in
+# README.md ("Installation"), which lets pyproject.toml pick compatible versions.
+#
+# Only the packages the pipeline and its plotting step actually import are
+# listed. Regenerate the pins from a working env with:
+#   conda activate SALT && pip list --format=freeze
+name: SALT
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.14
+  - pip
+  - pip:
+      # --- pipeline runtime (salt/, incl. matched_scan_plotting.py) ---
+      - numpy==2.4.4
+      - pandas==3.0.2
+      - pyopenms==3.5.0
+      - PyYAML==6.0.3
+      - matplotlib==3.10.8
+
+      # --- tests only ---
+      - pytest==9.1.0

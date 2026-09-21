@@ -1,0 +1,52 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+*.code-workspace
+# ...except the one workspace file that ships with the repo
+!SALT.code-workspace
+*.lnk
+.DS_Store
+Thumbs.db
+
+# ---- Pipeline runtime artifacts ----
+# Per-step log files (setup_logging writes "<script>_<timestamp>.log")
+*.log
+
+# Parallel runner scratch dirs and generated worker configs
+_parallel_runtime/
+
+# Local config copy: users copy config.example.yml -> config.yml, which holds
+# machine-specific paths and is never committed.
+config.yml
+
+# ---- Large input / output data (never commit MS data) ----
+*.raw
+*.RAW
+*.mzML
+*.mzml
+*.mgf
+*.d/
+
+# Pipeline output tables (templated names from the pipeline steps).
+# NOTE: prepare/*.csv and salt/data/*.csv reference data are intentionally
+# tracked and NOT ignored — check with `git check-ignore -v <path>` if unsure.
+*_low_id_ms2_df*.csv
+*_RSM_*.csv
+*_Evalue_*.csv
+manifest_decoy.csv
+manifest_*report*.csv

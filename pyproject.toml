@@ -1,0 +1,69 @@
+[build-system]
+# hatchling >= 1.27 supports the PEP 639 SPDX `license` string + `license-files`.
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "salt"
+version = "0.1.0"
+description = "RNA–peptide cross-link identification from mass spectrometry (SALT)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Shuyao Sha", email = "shashuyao@gmail.com" }]
+keywords = ["mass-spectrometry", "RNA", "cross-linking", "proteomics", "SALT"]
+
+# Core runtime dependencies – what the pipeline and its plotting step need to run.
+# Lower bounds, not exact pins: a library should not over-constrain its users.
+# (Exact reproducible versions live in SALT_env.yml for the conda env.)
+# matplotlib is a core dependency, not an extra: matched_scan_plotting.py is part
+# of the normal workflow, so a plain install must be enough to run it.
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyopenms>=3.0",
+    "pyyaml>=6.0",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+# Tooling for development.  Install with:  pip install -e ".[dev]"
+dev = [
+    "pytest>=8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/shashuyao/SALT"
+Repository = "https://github.com/shashuyao/SALT"
+
+# Entry point: the package is run via `python -m salt` (see salt/__main__.py).
+# No [project.scripts] console command – matches the group's convention.
+
+# ---------------------------------------------------------------------------
+# Build configuration (hatchling).
+# Root flat package layout: the importable code is the `salt/` directory.
+# The theoretical-spectra library and prep scripts stay in prepare/ (outside the
+# package) and are referenced at runtime via config paths, not bundled here.
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["salt"]
+# Ship the theoretical-spectra libraries and the recommended FragPipe workflow
+# (package data) inside the wheel so they can be loaded via importlib.resources
+# after `pip install`.
+artifacts = ["salt/data/*.csv", "salt/data/*.workflow"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "salt/**",
+    "prepare/**",
+    "tests/**",
+    "config.example.yml",
+    "SALT_env*.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
